@@ -21,23 +21,38 @@ class GameOfLife {
    }
 
    createField(): void {
-      document?.addEventListener("keydown", (e: KeyboardEvent) => {
+      document?.addEventListener('keydown', (e: KeyboardEvent) => {
          if(e.defaultPrevented)
             return
          if(e.code === 'Enter') {
-            //setTransition()
             this.start = !this.start
          } else if(e.code === 'Escape') 
-            this.reset();
+            this.reset()
          
-         e.preventDefault;
+         e.preventDefault
+      })
+
+      const startBtn: HTMLElement = document?.getElementById('start')
+      startBtn.addEventListener('click', (e) => {
+         if(e.defaultPrevented)
+            return
+         this.start = !this.start
+         startBtn.textContent = this.start ? 'Stop' : 'Start'
+         e.preventDefault()
+      })
+
+      document?.getElementById('reset').addEventListener('click', (e) => {
+         if(e.defaultPrevented)
+            return
+         this.reset()
+         e.preventDefault()
       })
 
       for(let i = 0; i < this.m; i++) {
          for(let j = 0; j < this.n; j++) {
-            const square: HTMLElement = document.createElement('div')
+            const square: HTMLElement = document?.createElement('div')
             square.classList.add('square')
-            square.setAttribute('id', `square-${i}-${j}`);
+            square.setAttribute('id', `square-${i}-${j}`)
         
             square.addEventListener('click', (e) => { 
                if(this.start || e.defaultPrevented)
@@ -84,7 +99,7 @@ class GameOfLife {
          if(this.start)
             this.applyRules()
       }
-      , this.delay);    
+      , this.delay)    
    }
 
    applyRules(): void {
@@ -98,7 +113,7 @@ class GameOfLife {
 
       this.cells.forEach((row, i) => row.forEach((el, j) => {
          if(el)
-            this.findNeibhours(count, i, j, this.cells.length - 1, this.cells[j].length - 1);
+            this.findNeibhours(count, i, j, this.cells.length - 1, this.cells[j].length - 1)
       }))
 
       count.forEach((row, i) => row.forEach((element: number, j: number) => {
@@ -108,7 +123,7 @@ class GameOfLife {
             this.cells[i][j] = true   
       }))
 
-      this.draw();
+      this.draw()
    }
 
    findNeibhours(count: number[][], i: number, j: number, maxI: number, maxJ: number): void {
@@ -150,11 +165,6 @@ class GameOfLife {
          }));
       }
    }
-
-   // setTransition(): void {
-   //    if(this.start)
-         
-   // }
 }
 
 const game = new GameOfLife();

@@ -7,7 +7,7 @@
  }
  
  h1{
-    color: #f0f0f0;
+    color: #dee4f1;
     font-weight: bold;
  }
 
@@ -40,6 +40,10 @@
    margin: 5px 10px 15px;
  }
 
+ .btn-info{
+   background-color: #5bc0de94;
+ }
+
  .footer-basic {
    margin: 0 10%;
    padding:40px 0;
@@ -54,13 +58,12 @@
    font-size:24px;
    width:40px;
    height:40px;
-   line-height:40px;
+   line-height:35px;
    display:inline-block;
    text-align:center;
    border-radius:50%;
-   border:1px solid #ccc;
+   border:1px solid #7ac9e170;
    margin:0 8px;
-   color:inherit;
    opacity:0.75;
  }
  
@@ -72,6 +75,6 @@
    margin-top:15px;
    text-align:center;
    font-size:13px;
-   color:#aaa;
+   color:#7ac9e170;
    margin-bottom:0;
  }
