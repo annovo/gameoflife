@@ -5,47 +5,40 @@ var GameOfLife = /** @class */ (function () {
         this.m = m;
         this.n = n;
         this.color = '#3498db';
-        this.delay = 1000;
+        this.delay = 500;
         this.start = false;
         this.isReset = false;
+        this.isHold = false;
         this.cells = [];
         for (var i = 0; i < m; i++) {
             if (!this.cells[i])
                 this.cells[i] = [];
             for (var j = 0; j < n; j++) {
-                this.cells[i][j] = false;
+                this.cells[i][j] = { isAlive: false, element: null };
             }
         }
     }
     GameOfLife.prototype.createField = function () {
         var _this = this;
         this.addEventListeners();
-        var container = document.getElementById('container');
+        var container = document === null || document === void 0 ? void 0 : document.getElementById('container');
         var _loop_1 = function (i) {
             var _loop_2 = function (j) {
                 var square = document === null || document === void 0 ? void 0 : document.createElement('div');
                 square.classList.add('square');
                 square.setAttribute('id', "square-" + i + "-" + j);
-                square.addEventListener('click', function (e) {
-                    if (_this.start || e.defaultPrevented)
+                square.addEventListener('click', function () {
+                    if (_this.start)
                         return;
-                    if (_this.cells[i][j]) {
+                    if (_this.cells[i][j].isAlive) {
                         _this.removeColor(square);
                     }
                     _this.isReset = false;
-                    _this.cells[i][j] = !_this.cells[i][j];
-                    e.preventDefault();
+                    _this.cells[i][j].isAlive = !_this.cells[i][j].isAlive;
                 });
-                square.addEventListener('mouseover', function (e) {
-                    if (_this.start || _this.cells[i][j])
-                        return;
-                    _this.setColor(square);
-                });
-                square.addEventListener('mouseout', function (e) {
-                    if (_this.start || _this.cells[i][j])
-                        return;
-                    _this.removeColor(square);
-                });
+                square.addEventListener('mouseover', function (e) { return _this.handleChange(e, i, j); });
+                square.addEventListener('mouseout', function (e) { return _this.handleChange(e, i, j); });
+                this_1.cells[i][j].element = square;
                 container.appendChild(square);
             };
             for (var j = 0; j < this_1.n; j++) {
@@ -60,6 +53,28 @@ var GameOfLife = /** @class */ (function () {
         var x = Math.floor(this.cells[0].length / 2);
         this.initPattern(x, y);
         this.initPattern(x - 3, y - 3);
+    };
+    GameOfLife.prototype.handleChange = function (e, i, j) {
+        if (this.start)
+            return;
+        switch (e.type) {
+            case 'mouseover':
+                if (this.isHold && this.cells[i][j].isAlive)
+                    this.removeColor(this.cells[i][j].element);
+                else if (!this.cells[i][j].isAlive)
+                    this.setColor(this.cells[i][j].element);
+                if (this.isHold) {
+                    this.cells[i][j].isAlive = !this.cells[i][j].isAlive;
+                    this.isReset = false;
+                }
+                break;
+            case 'mouseout':
+                if (!this.isHold && !this.cells[i][j].isAlive)
+                    this.removeColor(this.cells[i][j].element);
+                break;
+            default:
+                break;
+        }
     };
     GameOfLife.prototype.setColor = function (element) {
         element.style.background = "" + this.color;
@@ -85,15 +100,15 @@ var GameOfLife = /** @class */ (function () {
                 count[i][j] = 0;
             }
         }
-        this.cells.forEach(function (row, i) { return row.forEach(function (el, j) {
-            if (el)
+        this.cells.forEach(function (row, i) { return row.forEach(function (cell, j) {
+            if (cell.isAlive)
                 _this.findNeibhours(count, i, j, _this.cells.length - 1, _this.cells[j].length - 1);
         }); });
         count.forEach(function (row, i) { return row.forEach(function (element, j) {
             if (element < 2 || element > 3)
-                _this.cells[i][j] = false;
-            else if (!_this.cells[i][j] && element === 3)
-                _this.cells[i][j] = true;
+                _this.cells[i][j].isAlive = false;
+            else if (!_this.cells[i][j].isAlive && element === 3)
+                _this.cells[i][j].isAlive = true;
         }); });
         this.draw();
     };
@@ -117,12 +132,11 @@ var GameOfLife = /** @class */ (function () {
     };
     GameOfLife.prototype.draw = function () {
         var _this = this;
-        this.cells.forEach(function (row, i) { return row.forEach(function (el, j) {
-            var square = document === null || document === void 0 ? void 0 : document.getElementById("square-" + i + "-" + j);
-            if (el)
-                _this.setColor(square);
+        this.cells.forEach(function (row, i) { return row.forEach(function (cell, j) {
+            if (cell.isAlive)
+                _this.setColor(cell.element);
             else
-                _this.removeColor(square);
+                _this.removeColor(cell.element);
         }); });
     };
     GameOfLife.prototype.reset = function () {
@@ -130,45 +144,32 @@ var GameOfLife = /** @class */ (function () {
         this.start = false;
         if (!this.isReset) {
             this.isReset = true;
-            this.cells.forEach(function (row, i) { return row.forEach(function (el, j) {
-                _this.cells[i][j] = false;
-                _this.removeColor(document === null || document === void 0 ? void 0 : document.getElementById("square-" + i + "-" + j));
+            this.cells.forEach(function (row, i) { return row.forEach(function (cell, j) {
+                _this.cells[i][j].isAlive = false;
+                _this.removeColor(_this.cells[i][j].element);
             }); });
         }
     };
     GameOfLife.prototype.initPattern = function (x, y) {
         for (var i = y; i < y + 3; i++) {
             for (var j = x; j < x + 3; j++) {
-                this.cells[i][j] = true;
-                this.setColor(document === null || document === void 0 ? void 0 : document.getElementById("square-" + i + "-" + j));
+                this.cells[i][j].isAlive = true;
+                this.setColor(this.cells[i][j].element);
             }
         }
     };
     GameOfLife.prototype.addEventListeners = function () {
         var _this = this;
-        document === null || document === void 0 ? void 0 : document.addEventListener('keydown', function (e) {
-            if (e.defaultPrevented)
-                return;
-            if (e.code === 'Enter') {
-                _this.start = !_this.start;
-            }
-            else if (e.code === 'Escape')
-                _this.reset();
-            e.preventDefault;
-        });
-        var startBtn = document === null || document === void 0 ? void 0 : document.getElementById('start');
-        startBtn.addEventListener('click', function (e) {
-            if (e.defaultPrevented)
-                return;
+        document.addEventListener('mousedown', function () { _this.isHold = true; });
+        document.addEventListener('mouseup', function () { _this.isHold = false; });
+        var startBtn = document.getElementById('start');
+        startBtn.addEventListener('click', function () {
             _this.start = !_this.start;
             startBtn.textContent = _this.start ? 'Stop' : 'Start';
-            e.preventDefault();
         });
-        document === null || document === void 0 ? void 0 : document.getElementById('reset').addEventListener('click', function (e) {
-            if (e.defaultPrevented)
-                return;
+        document.getElementById('reset').addEventListener('click', function () {
             _this.reset();
-            e.preventDefault();
+            document.getElementById('start').textContent = 'Start';
         });
     };
     return GameOfLife;

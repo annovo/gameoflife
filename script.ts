@@ -1,9 +1,15 @@
+interface Cell {
+   isAlive: boolean,
+   element: HTMLElement | null
+}
+
 class GameOfLife {
    color: string = '#3498db'
-   cells: boolean[][]
-   delay: number = 1000
+   cells: Cell[][]
+   delay: number = 500
    start: boolean = false
    isReset: boolean = false
+   isHold: boolean = false
    constructor(
       public m: number = 30,
       public n: number = 30
@@ -13,7 +19,7 @@ class GameOfLife {
          if(!this.cells[i])
             this.cells[i] = []
          for(let j = 0; j < n; j++) {
-            this.cells[i][j] = false
+            this.cells[i][j] = {isAlive: false, element: null} 
          }
       }
    }
@@ -21,37 +27,28 @@ class GameOfLife {
    createField(): void {
       this.addEventListeners()
 
-      const container: HTMLElement = document.getElementById('container')
+      const container: HTMLElement = document?.getElementById('container')
       for(let i = 0; i < this.m; i++) {
          for(let j = 0; j < this.n; j++) {
             const square: HTMLElement = document?.createElement('div')
             square.classList.add('square')
             square.setAttribute('id', `square-${i}-${j}`)
-        
-            square.addEventListener('click', (e) => { 
-               if(this.start || e.defaultPrevented)
+
+            square.addEventListener('click', () => { 
+               if(this.start)
                    return
 
-               if(this.cells[i][j]) {
+               if(this.cells[i][j].isAlive) {
                   this.removeColor(square)
                } 
                this.isReset = false
-               this.cells[i][j] = !this.cells[i][j]
-
-               e.preventDefault()
+               this.cells[i][j].isAlive = !this.cells[i][j].isAlive
             })
             
-            square.addEventListener('mouseover', (e) => {
-               if(this.start || this.cells[i][j])
-                  return 
-               this.setColor(square) 
-            })
-            square.addEventListener('mouseout', (e) =>  {
-               if(this.start || this.cells[i][j])
-                  return 
-               this.removeColor(square) 
-            })
+            square.addEventListener('mouseover', (e) => this.handleChange(e, i, j))
+            square.addEventListener('mouseout', (e) =>  this.handleChange(e, i, j))
 
+            this.cells[i][j].element = square;
             container.appendChild(square)
          }       
       }
@@ -60,6 +57,26 @@ class GameOfLife {
       let x = Math.floor(this.cells[0].length / 2)
       this.initPattern(x, y)
       this.initPattern(x - 3, y - 3)
+   }
+
+   handleChange(e: Event, i: number, j: number): void {
+      if(this.start)
+         return 
+      switch(e.type) {
+         case 'mouseover':
+            if(this.isHold && this.cells[i][j].isAlive) this.removeColor(this.cells[i][j].element)
+            else if(!this.cells[i][j].isAlive) this.setColor(this.cells[i][j].element)
+            if(this.isHold) {
+               this.cells[i][j].isAlive = !this.cells[i][j].isAlive
+               this.isReset = false
+            }      
+            break
+         case 'mouseout':
+            if(!this.isHold && !this.cells[i][j].isAlive) this.removeColor(this.cells[i][j].element)
+            break
+         default:
+            break
+      }  
    }
 
    setColor(element: HTMLElement): void {
@@ -82,7 +99,8 @@ class GameOfLife {
    }
 
    applyRules(): void {
-      const count = [];
+      const count: number[][] = [];
+
       for(let i = 0; i < this.cells.length; i++) {
          count[i] = []
          for(let j = 0; j < this.cells[i].length; j++) {
@@ -90,16 +108,16 @@ class GameOfLife {
          }
       }
 
-      this.cells.forEach((row, i) => row.forEach((el, j) => {
-         if(el)
+      this.cells.forEach((row: Cell[], i: number) => row.forEach((cell: Cell, j: number) => {
+         if(cell.isAlive)
             this.findNeibhours(count, i, j, this.cells.length - 1, this.cells[j].length - 1)
       }))
 
-      count.forEach((row, i) => row.forEach((element: number, j: number) => {
+      count.forEach((row: number[], i: number) => row.forEach((element: number, j: number) => {
          if(element < 2 || element > 3)
-            this.cells[i][j] = false
-         else if(!this.cells[i][j] && element === 3)
-            this.cells[i][j] = true   
+            this.cells[i][j].isAlive = false
+         else if(!this.cells[i][j].isAlive && element === 3)
+            this.cells[i][j].isAlive = true   
       }))
 
       this.draw()
@@ -124,13 +142,12 @@ class GameOfLife {
          count[i + 1][j - 1] = count[i + 1][j - 1] ? count[i + 1][j - 1] + 1 : 1
    }
 
-   draw() {
-      this.cells.forEach((row, i) => row.forEach((el, j) => {
-         const square: HTMLElement = document?.getElementById(`square-${i}-${j}`)
-         if(el)
-            this.setColor(square)
+   draw(): void {
+      this.cells.forEach((row: Cell[], i: number) => row.forEach((cell: Cell, j: number) => {
+         if(cell.isAlive)
+            this.setColor(cell.element)
          else
-            this.removeColor(square)
+            this.removeColor(cell.element)
       }))
    }
 
@@ -138,9 +155,9 @@ class GameOfLife {
       this.start = false
       if(!this.isReset) {
          this.isReset = true
-         this.cells.forEach((row,i) => row.forEach((el,j) => { 
-            this.cells[i][j] = false
-            this.removeColor(document?.getElementById(`square-${i}-${j}`))
+         this.cells.forEach((row: Cell[], i: number) => row.forEach((cell: Cell, j: number) => { 
+            this.cells[i][j].isAlive = false
+            this.removeColor(this.cells[i][j].element)
          }));
       }
    }
@@ -148,38 +165,26 @@ class GameOfLife {
    initPattern(x: number, y: number): void {
       for(let i = y; i < y + 3; i++) {
          for(let j = x; j < x + 3; j++) {
-            this.cells[i][j] = true;
-            this.setColor(document?.getElementById(`square-${i}-${j}`))
+            this.cells[i][j].isAlive = true;
+            this.setColor(this.cells[i][j].element)
          }
       }
    }
 
    addEventListeners(): void {
-      document?.addEventListener('keydown', (e: KeyboardEvent) => {
-         if(e.defaultPrevented)
-            return
-         if(e.code === 'Enter') {
-            this.start = !this.start
-         } else if(e.code === 'Escape') 
-            this.reset()
-         
-         e.preventDefault
-      })
+      document.addEventListener('mousedown', () => { this.isHold = true })
+      document.addEventListener('mouseup', () => { this.isHold = false })
 
-      const startBtn: HTMLElement = document?.getElementById('start')
-      startBtn.addEventListener('click', (e) => {
-         if(e.defaultPrevented)
-            return
+      const startBtn: HTMLElement = document.getElementById('start')
+
+      startBtn.addEventListener('click', () => {
          this.start = !this.start
          startBtn.textContent = this.start ? 'Stop' : 'Start'
-         e.preventDefault()
       })
 
-      document?.getElementById('reset').addEventListener('click', (e) => {
-         if(e.defaultPrevented)
-            return
+      document.getElementById('reset').addEventListener('click', () => {
          this.reset()
-         e.preventDefault()
+         document.getElementById('start').textContent= 'Start'
       })
    }
 }
