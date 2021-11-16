@@ -10,5 +10,5 @@ Conway's Game Of Life in Typescript
 
 Useful resourses:
 
-* https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 * https://conwaylife.com/
+* https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
